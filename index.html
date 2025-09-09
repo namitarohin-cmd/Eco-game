@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eco Gardening Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: url('https://i.imgur.com/8qQO7Lw.jpg') no-repeat center center/cover;
+      overflow: hidden;
+      color: white;
+    }
+    #gameCanvas {
+      display: block;
+      margin: auto;
+      background: rgba(0,0,0,0.2);
+      border: 3px solid #fff;
+      border-radius: 10px;
+    }
+    #controls {
+      margin-top: 10px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #ffcc00;
+    }
+    button:hover {
+      background: #ffaa00;
+    }
+    #score {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌱 Eco Gardening Simulator</h1>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+  <div id="controls">
+    <button onclick="plantTree()">🌳 Plant Tree</button>
+    <button onclick="waterTrees()">💧 Water Trees</button>
+  </div>
+
+  <p id="score">Eco Points: 0</p>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let trees = [];
+    let trash = [];
+    let score = 0;
+
+    // Load images
+    const treeStages = [
+      "https://i.imgur.com/F8P3t9X.png", // sapling
+      "https://i.imgur.com/lPrZSMH.png", // small tree
+      "https://i.imgur.com/qbLg4FQ.png"  // big tree
+    ];
+    const trashImg = new Image();
+    trashImg.src = "https://i.imgur.com/uJkGZrf.png";
+
+    class Tree {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.stage = 0; // 0 = sapling, 1 = small tree, 2 = big tree
+        this.img = new Image();
+        this.img.src = treeStages[this.stage];
+      }
+      grow() {
+        if (this.stage < 2) {
+          this.stage++;
+          this.img.src = treeStages[this.stage];
+          score += 15;
+        }
+      }
+      draw() {
+        ctx.drawImage(this.img, this.x, this.y, 80, 100);
+      }
+    }
+
+    class Trash {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+      }
+      draw() {
+        ctx.drawImage(trashImg, this.x, this.y, 40, 40);
+      }
+    }
+
+    function plantTree() {
+      if (trees.length < 10) {
+        let x = Math.random() * (canvas.width - 100);
+        let y = Math.random() * (canvas.height - 120) + 50;
+        trees.push(new Tree(x, y));
+        score += 10;
+        updateScore();
+      }
+    }
+
+    function waterTrees() {
+      trees.forEach(tree => tree.grow());
+      updateScore();
+    }
+
+    function spawnTrash() {
+      if (trash.length < 7) {
+        let x = Math.random() * (canvas.width - 40);
+        let y = Math.random() * (canvas.height - 40);
+        trash.push(new Trash(x, y));
+      }
+    }
+
+    function cleanTrash(clickX, clickY) {
+      trash.forEach((t, index) => {
+        if (clickX >= t.x && clickX <= t.x+40 && clickY >= t.y && clickY <= t.y+40) {
+          trash.splice(index, 1);
+          score += 20;
+          updateScore();
+        }
+      });
+    }
+
+    canvas.addEventListener("click", function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      cleanTrash(x, y);
+    });
+
+    function updateScore() {
+      document.getElementById("score").textContent = "Eco Points: " + score;
+    }
+
+    function drawGame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      trees.forEach(tree => tree.draw());
+      trash.forEach(t => t.draw());
+      requestAnimationFrame(drawGame);
+    }
+
+    setInterval(spawnTrash, 4000); // Trash spawns every 4s
+    drawGame();
+  </script>
+</body>
+</html>
